@@ -26,10 +26,13 @@ const Vector = struct {
     x: f32,
     y: f32,
     z: f32,
-    fn Length(self: *const Vector) f32 {
+    pub fn Length(self: *const Vector) f32 {
         return @sqrt(self.x * self.x + self.y * self.y + self.z * self.z);
     }
 };
+
+const Tag = enum { value, err };
+const Result = union(Tag) { value: i32, err: GeneralError };
 
 pub fn main() !void {
     try basics();
@@ -103,6 +106,31 @@ fn basics() !void {
     try print("Structs\n");
     const v1 = Vector{ .x = 1, .y = 2, .z = 3 };
     try printformat("{d}\n", .{v1.Length()});
+
+    try print("Unions\n");
+    const un0 = Result{ .value = 34 };
+    const un1 = Result{ .err = GeneralError.InternalError };
+    try printformat("{d}\n", .{un0.value});
+    try printformat("{s}\n", .{@errorName(un1.err)});
+    switch (un0) {
+        .value => |a| try printformat("Value {d}\n", .{a}),
+        .err => |b| try printformat("Error {s}\n", .{@errorName(b)}),
+    }
+    switch (un0) {
+        .value => |*a| try printformat("Value* {d}\n", .{a.*}),
+        .err => |*b| try printformat("Error* {s}\n", .{@errorName(b.*)}),
+    }
+
+    try print("Labelled Blocks\n");
+
+    const count = blk: {
+        var sum: i32 = 0;
+        var k: i32 = 0;
+        while (k < 10) : (k += 1) sum += k;
+        break :blk sum;
+    };
+
+    try printformat("{d}\n", .{count});
 }
 
 fn printformat(comptime format: []const u8, args: anytype) !void {
