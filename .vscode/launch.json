@@ -15,6 +15,7 @@
             "logging": {
                 "moduleLoad": false
             },
+            "preLaunchTask": "build"
         }
     ]
 }
