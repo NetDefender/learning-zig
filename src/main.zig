@@ -35,7 +35,55 @@ const Tag = enum { value, err };
 const Result = union(Tag) { value: i32, err: GeneralError };
 
 pub fn main() !void {
-    try basics();
+    // try basics();
+    try stadardPatterns();
+}
+
+fn stadardPatterns() !void {
+    try print("Page Allocator\n");
+    const page_allocator = std.heap.page_allocator;
+    const page_memory = try page_allocator.alloc(u8, 100);
+    defer page_allocator.free(page_memory);
+    try printformat("{d}\n", .{page_memory.len});
+
+    try print("Fixed Allocator\n");
+    var fixed_buffer: [1000]u8 = undefined;
+    var fixed_buffer_allocator = std.heap.FixedBufferAllocator.init(&fixed_buffer);
+    const fixed_allocator = fixed_buffer_allocator.allocator();
+    const fixed_memory = try fixed_allocator.alloc(u8, 100);
+    defer fixed_allocator.free(fixed_memory);
+
+    try print("General Allocator\n");
+    var general_purpose_allocator = std.heap.GeneralPurposeAllocator(.{}){};
+    const general_allocator = general_purpose_allocator.allocator();
+
+    defer {
+        const check = general_purpose_allocator.deinit();
+        if (check == .leak) {}
+    }
+
+    const general_bytes = try general_allocator.alloc(u8, 100);
+    defer general_allocator.free(general_bytes);
+
+    try print("Arraylist\n");
+    var list = std.ArrayList(u8).init(general_allocator);
+    defer list.deinit();
+    try list.append('A');
+    try list.append('Z');
+    try list.appendSlice("Hello");
+    try printformat("{s}\n", .{list.items});
+
+    try print("FileSystem\n");
+    const file = try std.fs.cwd().createFile("test.txt", .{ .read = true });
+    defer file.close();
+    const bytes_written = try file.writeAll("Hello file!");
+    _ = bytes_written;
+    try file.seekTo(0);
+    var file_buffer: [100]u8 = undefined;
+    const bytes_read = try file.readAll(&file_buffer);
+    try printformat("{d} {s}\n", .{ bytes_read, file_buffer[0..bytes_read] });
+    const stats = try file.stat();
+    try printformat("{d} {d} {s}", .{ stats.ctime, stats.mtime, @tagName(stats.kind) });
 }
 
 fn basics() !void {
