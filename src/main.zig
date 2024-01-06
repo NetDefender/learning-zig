@@ -131,6 +131,30 @@ fn basics() !void {
     };
 
     try printformat("{d}\n", .{count});
+
+    try print("While return\n");
+
+    i = 0;
+    const val = while (i < 5) : (i += 1) {
+        if (i == 1) break i;
+    } else 10;
+
+    try printformat("{d}\n", .{val});
+
+    try print("OrElse null\n");
+
+    const nullable: ?i32 = null;
+    const notnullable = nullable orelse 0;
+
+    try printformat("{d}\n", .{notnullable});
+
+    try print("While null\n");
+
+    i = 5;
+
+    while (eventuallyNull(i)) |valu| : (i -= 1) {
+        try printformat("{d}", .{valu});
+    }
 }
 
 fn printformat(comptime format: []const u8, args: anytype) !void {
@@ -155,6 +179,10 @@ fn increment(x: *i32) void {
     x.* += 100;
 }
 
+fn eventuallyNull(i: i32) ?i32 {
+    if (i == 0) return null;
+    return i - 1;
+}
 test "simple test" {
     var list = std.ArrayList(i32).init(std.testing.allocator);
     defer list.deinit(); // try commenting this out and see if zig detects the memory leak!
